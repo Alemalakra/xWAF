@@ -33,6 +33,8 @@ $xWAF->checkPOST();
 $xWAF->checkCOOKIE();
 // Your code below.
 ```
+# CSRF EXample
+Please read test.php
 
 # Requirements
 
