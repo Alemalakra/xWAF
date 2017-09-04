@@ -1,4 +1,4 @@
-# xWAF
+# xWAF - Web Application Firewall
 Free Web Application Firewall, Open-Source.
 
 # Features
