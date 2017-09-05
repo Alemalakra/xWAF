@@ -25,7 +25,7 @@ $xWAF = new xWAF();
 // Cloudflare Option [Optional]
 $xWAF->useCloudflare();
 // useBlazingfast Option [Optional]
-$xWAF->useCloudflare();
+$xWAF->useBlazingfast();
 
 // Check separated types.
 $xWAF->checkGET();
