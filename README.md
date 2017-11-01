@@ -5,8 +5,11 @@ Free Web Application Firewall, Open-Source.
 
 - [x] XSS Vulns Fixed.
 - [x] SQL Inyections Fixed.
+- [x] HTML Malicious Code's Vulns Fixed.
 - [x] CSRF Easy to use, and validation.
 - [x] Lightweight.
+- [x] Advanced Bot validation, Browser Validation.
+- [x] Security upgraded.
 - [x] Cloudflare and BlazingFast Support.
 
 # Sample Usage
@@ -38,5 +41,5 @@ Please read test.php
 
 # Requirements
 
-- [x] PHP5.x+
+- [x] PHP5.x+ (With common functions)
 - [x] Brain
