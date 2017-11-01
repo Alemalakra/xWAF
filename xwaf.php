@@ -25,16 +25,12 @@ class xWAF {
 		echo '<font face="Helvetica" size="2"><br><br>To report some bug or somenthing contact <a href="mailto:a1ema1akra@cock.li">firewall developer</a>.</font>';
 		echo '<hr>';
 		echo '</body></html>';
-		die(); // Important... Never remove this.
+		die(); // Important... Never remove this, block request.
 	}
-	function sqlCheck($Value, $Method, $DisplayName) {
-		// For false alerts.
-		$Replace = array("can't" => "cant",
-						"don't" => "dont");
-		foreach ($Replace as $key => $value_rep) {
-			$Value = str_replace($key, $value_rep, $Value);
-		}
-		$BadWords = array(
+	function getArray($Type) {
+		switch ($Type) {
+			case 'SQL':
+				return array(
 							"'",
 							'SELECT FROM',
 							'SELECT * FROM',
@@ -55,6 +51,36 @@ class xWAF {
 							'unhex(hex(Concat(',
 							'Table_schema,0x3e,'
 							);
+				break;
+			case 'XSS':
+				return array('<img',
+						'img>',
+						'<image',
+						'document.cookie',
+						'onerror()',
+						'script>',
+						'<script',
+						'alert(',
+						'String.fromCharCode(',
+						'javascript:',
+						'onmouseover="',
+						'<BODY onload',
+						'svg onload');
+				break;
+			
+			default:
+				return false;
+				break;
+		}
+	}
+	function sqlCheck($Value, $Method, $DisplayName) {
+		// For false alerts.
+		$Replace = array("can't" => "cant",
+						"don't" => "dont");
+		foreach ($Replace as $key => $value_rep) {
+			$Value = str_replace($key, $value_rep, $Value);
+		}
+		$BadWords = $this->getArray('SQL');
 
 		foreach ($BadWords as $BadWord) {
 			if (strpos(strtolower($Value), strtolower($BadWord)) !== false) {
@@ -70,18 +96,7 @@ class xWAF {
 		foreach ($Replace as $key => $value_rep) {
 			$Value = str_replace($key, $value_rep, $Value);
 		}
-		$BadWords = array('<img',
-						'img>',
-						'<imagen',
-						'document.cookie',
-						'onerror()',
-						'script>',
-						'<script',
-						'alert(',
-						'String.fromCharCode(',
-						'javascript:',
-						'onmouseover="',
-						'<BODY onload');
+		$BadWords = $this->getArray('XSS');
 
 		foreach ($BadWords as $BadWord) {
 			if (strpos(strtolower($Value), strtolower($BadWord)) !== false) {
@@ -92,23 +107,60 @@ class xWAF {
 			}
 		}
 	}
+	function is_html($string) {
+		return preg_match("/<[^<]+>/",$string,$m) != 0;
+	}
+	function santizeString($String) {
+		$String = escapeshellarg($String);
+		$String = htmlentities($String);
+		$String = htmlentities($String);
+		$XSS = $this->getArray('XSS');
+		foreach ($XSS as $replace) {
+			$String = str_replace($replace, '', $String);
+		}
+		$SQL = $this->getArray('SQL');
+		foreach ($SQL as $replace) {
+			$String = str_replace($replace, '', $String);
+		}
+		return $String;
+	}
+	function htmlCheck($value, $Method, $DisplayName) {
+		if ($this->is_html(strtolower($value)) !== false) {
+			// HTML Detected!
+			$this->vulnDetectedHTML($Method, "HTML CHARS", $DisplayName, 'XSS');
+		}
+	}
 	function checkGET() {
 		foreach ($_GET as $key => $value) {
 			$this->sqlCheck($value, "_GET", $key);
 			$this->xssCheck($value, "_GET", $key);
+			$this->htmlCheck($value, "_GET", $key);
 		}
 	}
 	function checkPOST() {
 		foreach ($_POST as $key => $value) {
 			$this->sqlCheck($value, "_POST", $key);
 			$this->xssCheck($value, "_POST", $key);
+			$this->htmlCheck($value, "_POST", $key);
 		}
 	}
 	function checkCOOKIE() {
 		foreach ($_COOKIE as $key => $value) {
 			$this->sqlCheck($value, "_COOKIE", $key);
 			$this->xssCheck($value, "_COOKIE", $key);
+			$this->htmlCheck($value, "_COOKIE", $key);
 		}
+	}
+	function gua() {
+		if (isset($_SERVER['HTTP_USER_AGENT'])) {
+			return $_SERVER['HTTP_USER_AGENT'];
+		}
+		return md5(rand());
+	}
+	function cutGua($string) {
+		$five = substr($string, 0, 4);
+		$last = substr($string, -3);
+		return md5($five.$last);
 	}
 	function getCSRF() {
 		if (isset($_SESSION['token'])) {
@@ -117,13 +169,13 @@ class xWAF {
 				return $_SESSION['token'];
 			} else {
 				$token = md5(uniqid(rand(), TRUE));
-				$_SESSION['token'] = $token;
+				$_SESSION['token'] = $token . "_" . $this->cutGua($this->gua());
 				$_SESSION['token_time'] = time();
 				return $_SESSION['token'];
 			}
 		} else {
 			$token = md5(uniqid(rand(), TRUE));
-			$_SESSION['token'] = $token;
+			$_SESSION['token'] = $token . "./" . $this->cutGua($this->gua());
 			$_SESSION['token_time'] = time();
 			return $_SESSION['token'];
 		}
@@ -133,10 +185,17 @@ class xWAF {
 			$token_age = time() - $_SESSION['token_time'];
 			if ($token_age <= 300){    /* Less than five minutes has passed. */
 				if ($Value == $_SESSION['token']) {
-					// Validated, Done!
+					$Explode = explode('./', $_SESSION['token']);
+					$gua = $Explode[1];
+					if ($this->cutGua($this->gua()) == $gua) {
+						// Validated, Done!
+						unset($_SESSION['token']);
+						unset($_SESSION['token_time']);
+						return true;
+					}
 					unset($_SESSION['token']);
 					unset($_SESSION['token_time']);
-					return true;
+					return false;
 				}
 			} else {
 				return false;
@@ -146,7 +205,7 @@ class xWAF {
 		}
 	}
 	function useCloudflare() {
-		$this->IPHeader = "CF-Connecting-IP";
+		$this->IPHeader = "HTTP_CF_CONNECTING_IP";
 	}
 	function useBlazingfast() {
 		$this->IPHeader = "X-Real-IP";
