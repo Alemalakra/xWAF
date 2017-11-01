@@ -1,9 +1,9 @@
 <?php
 /**
- *  xWAF 1.0 - Free Web Application Firewall, Open-Source.
+ *  xWAF 2.0 - Free Web Application Firewall, Open-Source.
  *
  *  @author Alemalakra
- *  @version 1.0
+ *  @version 2.0
  */
 
 class xWAF {
