@@ -1,14 +1,16 @@
 <?php
 /**
- *  xWAF 2.0 - Free Web Application Firewall, Open-Source.
+ *  xWAF 2.1 - Free Web Application Firewall, Open-Source.
  *
  *  @author Alemalakra
- *  @version 2.0
+ *  @version 2.1
  */
 
 class xWAF {
 	function __construct() {
 		$this->IPHeader = "REMOTE_ADDR";
+		error_reporting(E_ERROR);
+		return true;
 	}
 	function vulnDetectedHTML($Method, $BadWord, $DisplayName, $TypeVuln) {
 		echo '<html><head><meta http-equiv="content-type" content="text/html; charset=UTF-8"><title>xWAF</title></head><body><table width="100%"><tbody><tr><td colspan="2" style="font-family:Trebuchet MS;font-weight:bold;color:white" bgcolor="red" align="center">Access has been denied </td></tr></tbody></table>';
@@ -39,7 +41,7 @@ class xWAF {
 							'UNION',
 							'UDPATE users SET',
 							'WHERE username',
-							'drop',
+							'DROP TABLE',
 							'table',
 							'0x50',
 							'mid((select',
@@ -73,6 +75,14 @@ class xWAF {
 				break;
 		}
 	}
+	function arrayFlatten(array $array) {
+	    $flatten = array();
+	    array_walk_recursive($array, function($value) use(&$flatten) {
+	        $flatten[] = $value;
+	    });
+
+	    return $flatten;
+	}
 	function sqlCheck($Value, $Method, $DisplayName) {
 		// For false alerts.
 		$Replace = array("can't" => "cant",
@@ -81,12 +91,10 @@ class xWAF {
 			$Value = str_replace($key, $value_rep, $Value);
 		}
 		$BadWords = $this->getArray('SQL');
-
 		foreach ($BadWords as $BadWord) {
 			if (strpos(strtolower($Value), strtolower($BadWord)) !== false) {
-			    // String contains some Vuln.
-				$this->vulnDetectedHTML($Method, $BadWord, $DisplayName, 'SQL INYECTION');
-
+				// String contains some Vuln.
+				$this->vulnDetectedHTML($Method, $BadWord, $Value, 'SQL INYECTION');
 			}
 		}
 	}
@@ -108,11 +116,11 @@ class xWAF {
 		}
 	}
 	function is_html($string) {
-		return preg_match("/<[^<]+>/",$string,$m) != 0;
+		return $string != strip_tags($string) ? true:false;
+
 	}
 	function santizeString($String) {
 		$String = escapeshellarg($String);
-		$String = htmlentities($String);
 		$String = htmlentities($String);
 		$XSS = $this->getArray('XSS');
 		foreach ($XSS as $replace) {
@@ -130,25 +138,58 @@ class xWAF {
 			$this->vulnDetectedHTML($Method, "HTML CHARS", $DisplayName, 'XSS');
 		}
 	}
+	function arrayValues($Array) {
+		return array_values($Array);
+	}
 	function checkGET() {
 		foreach ($_GET as $key => $value) {
-			$this->sqlCheck($value, "_GET", $key);
-			$this->xssCheck($value, "_GET", $key);
-			$this->htmlCheck($value, "_GET", $key);
+			if (is_array($value)) {
+				$flattened = $this->arrayFlatten($value);
+				foreach ($flattened as $sub_key => $sub_value) {
+					$this->sqlCheck($sub_value, "_GET", $sub_key);
+					$this->xssCheck($sub_value, "_GET", $sub_key);
+					$this->htmlCheck($sub_value, "_GET", $sub_key);
+				}
+			} else {
+				$this->sqlCheck($value, "_GET", $key);
+				$this->xssCheck($value, "_GET", $key);
+				$this->htmlCheck($value, "_GET", $key);
+				$_GET[$key] = $this->santizeString($_GET[$key]);
+			}
 		}
 	}
 	function checkPOST() {
 		foreach ($_POST as $key => $value) {
-			$this->sqlCheck($value, "_POST", $key);
-			$this->xssCheck($value, "_POST", $key);
-			$this->htmlCheck($value, "_POST", $key);
+			if (is_array($value)) {
+				$flattened = $this->arrayFlatten($value);
+				foreach ($flattened as $sub_key => $sub_value) {
+					$this->sqlCheck($sub_value, "_POST", $sub_key);
+					$this->xssCheck($sub_value, "_POST", $sub_key);
+					$this->htmlCheck($sub_value, "_POST", $sub_key);
+				}
+			} else {
+				$this->sqlCheck($value, "_POST", $key);
+				$this->xssCheck($value, "_POST", $key);
+				$this->htmlCheck($value, "_POST", $key);
+				$_POST[$key] = $this->santizeString($_POST[$value]);
+			}
 		}
 	}
 	function checkCOOKIE() {
 		foreach ($_COOKIE as $key => $value) {
-			$this->sqlCheck($value, "_COOKIE", $key);
-			$this->xssCheck($value, "_COOKIE", $key);
-			$this->htmlCheck($value, "_COOKIE", $key);
+			if (is_array($value)) {
+				$flattened = $this->arrayFlatten($value);
+				foreach ($flattened as $sub_key => $sub_value) {
+					$this->sqlCheck($sub_value, "_COOKIE", $sub_key);
+					$this->xssCheck($sub_value, "_COOKIE", $sub_key);
+					$this->htmlCheck($sub_value, "_COOKIE", $sub_key);
+				}
+			} else {
+				$this->sqlCheck($value, "_COOKIE", $key);
+				$this->xssCheck($value, "_COOKIE", $key);
+				$this->htmlCheck($value, "_COOKIE", $key);
+				$_COOKIE[$key] = $this->santizeString($_COOKIE[$value]);
+			}
 		}
 	}
 	function gua() {
@@ -169,13 +210,13 @@ class xWAF {
 				return $_SESSION['token'];
 			} else {
 				$token = md5(uniqid(rand(), TRUE));
-				$_SESSION['token'] = $token . "_" . $this->cutGua($this->gua());
+				$_SESSION['token'] = $token . "asd648" . $this->cutGua($this->gua());
 				$_SESSION['token_time'] = time();
 				return $_SESSION['token'];
 			}
 		} else {
 			$token = md5(uniqid(rand(), TRUE));
-			$_SESSION['token'] = $token . "./" . $this->cutGua($this->gua());
+			$_SESSION['token'] = $token . "asd648" . $this->cutGua($this->gua());
 			$_SESSION['token_time'] = time();
 			return $_SESSION['token'];
 		}
@@ -185,7 +226,7 @@ class xWAF {
 			$token_age = time() - $_SESSION['token_time'];
 			if ($token_age <= 300){    /* Less than five minutes has passed. */
 				if ($Value == $_SESSION['token']) {
-					$Explode = explode('./', $_SESSION['token']);
+					$Explode = explode('asd648', $_SESSION['token']);
 					$gua = $Explode[1];
 					if ($this->cutGua($this->gua()) == $gua) {
 						// Validated, Done!
@@ -210,11 +251,15 @@ class xWAF {
 	function useBlazingfast() {
 		$this->IPHeader = "X-Real-IP";
 	}
+	function customIPHeader($String = 'REMOTE_ADDR') {
+		$this->IPHeader = $String;
+	}
 	function start() {
 		session_start();
 		$this->checkGET();
 		$this->checkPOST();
 		$this->checkCOOKIE();
+		error_reporting(E_ERROR | E_WARNING | E_PARSE | E_NOTICE);
 	}
 
 }
