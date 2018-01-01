@@ -13,6 +13,7 @@ $xWAF->start();
 	<br><br><br><br><br><br>
 
 	<?php
+	// This is optional
 	if (isset($_POST['csrf'])) {
 		// Aright! Form Requested.
 		if ($xWAF->verifyCSRF($_POST['csrf'])) {
@@ -23,6 +24,7 @@ $xWAF->start();
 			echo "Invalid CSRF Token!";
 		}
 	}
+	// This is optional
 	?>
 
 	<br><br><br><br><br><br>
