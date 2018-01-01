@@ -154,7 +154,6 @@ class xWAF {
 				$this->sqlCheck($value, "_GET", $key);
 				$this->xssCheck($value, "_GET", $key);
 				$this->htmlCheck($value, "_GET", $key);
-				$_GET[$key] = $this->santizeString($_GET[$key]);
 			}
 		}
 	}
@@ -171,7 +170,6 @@ class xWAF {
 				$this->sqlCheck($value, "_POST", $key);
 				$this->xssCheck($value, "_POST", $key);
 				$this->htmlCheck($value, "_POST", $key);
-				$_POST[$key] = $this->santizeString($_POST[$value]);
 			}
 		}
 	}
@@ -188,7 +186,6 @@ class xWAF {
 				$this->sqlCheck($value, "_COOKIE", $key);
 				$this->xssCheck($value, "_COOKIE", $key);
 				$this->htmlCheck($value, "_COOKIE", $key);
-				$_COOKIE[$key] = $this->santizeString($_COOKIE[$value]);
 			}
 		}
 	}
