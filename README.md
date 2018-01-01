@@ -39,10 +39,9 @@ $xWAF->checkPOST();
 $xWAF->checkCOOKIE();
 // Your code below.
 ```
-# CSRF EXample
+# CSRF Validation Example
 Please read test.php
 
 # Requirements
 
 - [x] PHP5.x+ (With common functions)
-- [x] Brain
