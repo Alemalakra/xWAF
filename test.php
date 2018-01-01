@@ -9,9 +9,7 @@ $xWAF->start();
 ?>
 <title>xWAF Test</title>
 
-<center>
-	<br><br><br><br><br><br>
-
+<div align="center">
 	<?php
 	// This is optional
 	if (isset($_POST['csrf'])) {
@@ -35,4 +33,4 @@ $xWAF->start();
 		<br>
 		<button type="submit">Submit Form POST</button>
 	</form>
-</center>
+</div>
