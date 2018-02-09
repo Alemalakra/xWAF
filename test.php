@@ -1,11 +1,8 @@
 <?php
-require('xwaf.php'); // BEFORE OF ALL! IMPORTANT
-
+require('xwaf.php'); // Before all your code starts.
 $xWAF = new xWAF();
 $xWAF->start();
-
-// Done, Blocking XSS, SQL, and HTML Malicious code.
-
+// Done, Protection enabled.
 ?>
 <title>xWAF Test</title>
 
@@ -24,8 +21,6 @@ $xWAF->start();
 	}
 	// This is optional
 	?>
-
-	<br><br><br><br><br><br>
 	<form method="POST">
 		Sample Input: <input type="text" name="someinputname" value="Vuln me">
 		<br>
