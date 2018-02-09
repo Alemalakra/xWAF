@@ -4,18 +4,22 @@ Original Free Web Application Firewall, Open-Source.
 # Features
 
 - [x] XSS Vulns Fixed.
-- [x] SQL Inyections Fixed.
+- [x] SQL Injection Fixed.
+- [x] Anti-Cookie-Steal Method.
 - [x] HTML Malicious Code's Vulns Fixed.
 - [x] CSRF Easy to use, and validation.
+- [x] Block HTML Upgraded.
 - [x] Lightweight.
 - [x] Array Support, All Bypass fixed.
 - [x] Advanced Bot validation, Browser Validation.
+- [x] Most Poc's SQLi and XSS.
 - [x] Security upgraded.
+- [x] Errors supression.
 - [x] Cloudflare and BlazingFast Support.
 
 # Sample Usage
 ```php
-// Before of all your CODE.
+// Before all your code starts.
 require('xwaf.php');
 $xWAF = new xWAF();
 $xWAF->start();
@@ -32,6 +36,8 @@ $xWAF->useCloudflare();
 $xWAF->useBlazingfast();
 // Use Own IP Header [Optional]
 $xWAF->customIPHeader('IP-Header');
+// Anti-Cookie-Steal Method [Optional]
+$xWAF->antiCookieSteal('username'); // For trigger if on PHPSESSID is logged.
 
 // Check separated types.
 $xWAF->checkGET();
@@ -44,4 +50,4 @@ Please read test.php
 
 # Requirements
 
-- [x] PHP5.x+ (With common functions)
+- [x] Min: PHP5.3 (With common functions)
