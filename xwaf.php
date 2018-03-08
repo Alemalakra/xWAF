@@ -126,7 +126,7 @@ class xWAF {
 			if (strpos(strtolower($Value), strtolower($BadWord)) !== false) {
 			    // String contains some Vuln.
 
-				$this->vulnDetectedHTML($Method, $BadWord, $DisplayName, 'XSS (Cross-Site-Crossing)');
+				$this->vulnDetectedHTML($Method, $BadWord, $DisplayName, 'XSS (Cross-Site-Scripting)');
 			}
 		}
 	}
